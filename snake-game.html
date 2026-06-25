@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game 🐍</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d1a;
+    --bg2: #13132b;
+    --card: #1a1a35;
+    --border: rgba(255,255,255,0.08);
+    --green: #00ff88;
+    --green2: #00cc6a;
+    --red: #ff4d6d;
+    --yellow: #ffd700;
+    --purple: #b44dff;
+    --blue: #4d9fff;
+    --text: #f0f0ff;
+    --text2: #8888aa;
+    --glow: 0 0 20px rgba(0,255,136,0.3);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0d35 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.6rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--green), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+
+  .tagline {
+    font-size: 0.8rem;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    width: 100%;
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,255,136,0.07) 0%, transparent 70%);
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero h1 span { color: var(--green); text-shadow: var(--glow); }
+
+  .hero p {
+    color: var(--text2);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0 1rem 2rem;
+    width: 100%;
+    max-width: 900px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── GAME PANEL ── */
+  .game-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  /* ── SCORE BAR ── */
+  .score-bar {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .stat-box .lbl {
+    font-size: 0.65rem;
+    color: var(--text2);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .stat-box .val {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  #levelVal { color: var(--purple); }
+  #bestVal { color: var(--yellow); }
+
+  /* ── CANVAS ── */
+  #canvas {
+    border-radius: 12px;
+    border: 2px solid rgba(0,255,136,0.2);
+    box-shadow: 0 0 40px rgba(0,255,136,0.08), inset 0 0 40px rgba(0,0,0,0.5);
+    display: block;
+    cursor: pointer;
+  }
+
+  /* ── MESSAGE ── */
+  #msg {
+    font-size: 0.85rem;
+    color: var(--text2);
+    text-align: center;
+    min-height: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0,255,136,0.3);
+    background: rgba(0,255,136,0.08);
+    color: var(--green);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    background: rgba(0,255,136,0.18);
+    box-shadow: var(--glow);
+    transform: translateY(-1px);
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn.red {
+    border-color: rgba(255,77,109,0.4);
+    background: rgba(255,77,109,0.08);
+    color: var(--red);
+  }
+
+  .btn.red:hover { background: rgba(255,77,109,0.18); box-shadow: 0 0 20px rgba(255,77,109,0.3); }
+
+  /* ── D-PAD ── */
+  .dpad {
+    display: grid;
+    grid-template-columns: 44px 44px 44px;
+    grid-template-rows: 44px 44px;
+    gap: 4px;
+  }
+
+  .dpad-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    user-select: none;
+  }
+
+  .dpad-btn:hover { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); }
+  .dpad-btn:active { transform: scale(0.9); background: rgba(0,255,136,0.2); }
+  .up { grid-column: 2; grid-row: 1; }
+  .left { grid-column: 1; grid-row: 2; }
+  .down { grid-column: 2; grid-row: 2; }
+  .right { grid-column: 3; grid-row: 2; }
+
+  /* ── SIDE PANEL ── */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 200px;
+    max-width: 240px;
+    flex: 1;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+
+  .card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── HOW TO PLAY ── */
+  .how-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text2);
+  }
+
+  .how-item .key {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── LEGEND ── */
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.82rem;
+    color: var(--text2);
+  }
+
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── HIGHSCORES ── */
+  .hs-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .hs-item:last-child { border-bottom: none; }
+  .hs-rank { color: var(--text2); font-size: 0.75rem; }
+  .hs-score { font-family: 'Orbitron', monospace; font-size: 0.9rem; color: var(--yellow); }
+  .hs-empty { color: var(--text2); font-size: 0.8rem; text-align: center; padding: 0.5rem 0; }
+
+  /* ── FOOTER ── */
+  footer {
+    width: 100%;
+    text-align: center;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    background: var(--bg2);
+  }
+
+  footer span { color: var(--green); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    header { padding: 0.8rem 1rem; }
+    .logo { font-size: 1.2rem; }
+    .main { padding: 0 0.75rem 1.5rem; gap: 1rem; }
+    .side-panel { max-width: 100%; width: 100%; }
+    .game-panel { padding: 1rem; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes pulse-green {
+    0%,100% { box-shadow: 0 0 20px rgba(0,255,136,0.15); }
+    50% { box-shadow: 0 0 40px rgba(0,255,136,0.35); }
+  }
+
+  #canvas.active { animation: pulse-green 2s ease-in-out infinite; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .hero, .game-panel, .side-panel { animation: fadeIn 0.5s ease; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">🐍 SNAKE</div>
+    <div class="tagline">Classic arcade game</div>
+  </div>
+  <div style="text-align:right; font-size:0.78rem; color:var(--text2);">
+    Use <span style="color:var(--green)">arrows</span> or <span style="color:var(--green)">WASD</span> to play
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Play <span>Snake</span> Online</h1>
+  <p>Eat apples, grow longer, don't crash — beat your high score!</p>
+</div>
+
+<div class="main">
+
+  <!-- GAME -->
+  <div class="game-panel">
+    <div class="score-bar">
+      <div class="stat-box"><div class="lbl">Score</div><div class="val" id="scoreVal">0</div></div>
+      <div class="stat-box"><div class="lbl">Best</div><div class="val" id="bestVal">0</div></div>
+      <div class="stat-box"><div class="lbl">Level</div><div class="val" id="levelVal">1</div></div>
+    </div>
+
+    <canvas id="canvas" width="320" height="320"></canvas>
+
+    <div id="msg">Press <strong style="color:var(--green)">Start</strong> or any arrow key!</div>
+
+    <div class="btn-row">
+      <button class="btn" id="startBtn" onclick="startGame()">▶ START</button>
+      <button class="btn red" id="pauseBtn" onclick="togglePause()">⏸ PAUSE</button>
+    </div>
+
+    <div class="dpad">
+      <button class="dpad-btn up" onclick="changeDir(0,-1)">↑</button>
+      <button class="dpad-btn left" onclick="changeDir(-1,0)">←</button>
+      <button class="dpad-btn down" onclick="changeDir(0,1)">↓</button>
+      <button class="dpad-btn right" onclick="changeDir(1,0)">→</button>
+    </div>
+  </div>
+
+  <!-- SIDE -->
+  <div class="side-panel">
+
+    <div class="card">
+      <h3>How to Play</h3>
+      <div class="how-item"><span class="key">↑ ↓ ← →</span>Move snake</div>
+      <div class="how-item"><span class="key">W A S D</span>Also works</div>
+      <div class="how-item"><span class="key">Space</span>Pause/Resume</div>
+      <div class="how-item"><span class="key">R</span>Restart</div>
+      <div style="font-size:0.8rem; color:var(--text2); margin-top:0.5rem; line-height:1.6;">
+        Every <span style="color:var(--green)">50 pts</span> → level up!<br>
+        Higher level = faster speed.<br>
+        Bonus ⭐ gives <span style="color:var(--yellow)">30 pts</span>!
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Legend</h3>
+      <div class="legend-item"><div class="dot" style="background:#ff4d6d;"></div>Apple — 10 × level pts</div>
+      <div class="legend-item"><div class="dot" style="background:#ffd700;"></div>Bonus star — 30 × level</div>
+      <div class="legend-item"><div class="dot" style="background:#00ff88; border-radius:4px;"></div>Snake head</div>
+      <div class="legend-item"><div class="dot" style="background:#4d9fff; border-radius:4px;"></div>Snake body</div>
+    </div>
+
+    <div class="card">
+      <h3>High Scores</h3>
+      <div id="hsContainer"><div class="hs-empty">Play to record scores!</div></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  Made with <span>♥</span> · Classic Snake Game · Use keyboard or D-pad to play
+</footer>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const COLS=16, ROWS=16, CELL=20;
+
+const PALETTE = {
+  bg:'#0d0d1a', grid1:'rgba(255,255,255,0.015)', grid2:'rgba(0,0,0,0.03)',
+  head:'#00ff88', headGlow:'rgba(0,255,136,0.6)',
+  body:['#4d9fff','#b44dff','#ffd700','#ff9933','#00ccff'],
+  apple:'#ff4d6d', appleGlow:'rgba(255,77,109,0.6)',
+  bonus:'#ffd700', bonusGlow:'rgba(255,215,0,0.6)',
+  wall:'rgba(255,255,255,0.03)'
+};
+
+let snake, dir, nextDir, apple, bonus, bonusTimer;
+let score=0, best=0, level=1, speed=180;
+let loop=null, paused=false, started=false;
+let highScores=[];
+let frame=0;
+
+function init(keepBest=false) {
+  if(!keepBest) score=0;
+  snake=[{x:8,y:8},{x:7,y:8},{x:6,y:8}];
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  apple=rPos([]); bonus=null; bonusTimer=0;
+  level=1; speed=180; paused=false; started=false; frame=0;
+  updateUI();
+  draw();
+  document.getElementById('msg').innerHTML='Press <strong style="color:#00ff88">Start</strong> or any arrow key!';
+  canvas.classList.remove('active');
+}
+
+function rPos(ex=[]) {
+  let p;
+  do { p={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)}; }
+  while([...snake,...ex].some(s=>s.x===p.x&&s.y===p.y));
+  return p;
+}
+
+function updateUI() {
+  document.getElementById('scoreVal').textContent=score;
+  document.getElementById('bestVal').textContent=best;
+  document.getElementById('levelVal').textContent=level;
+}
+
+function changeDir(dx,dy) {
+  if(!started&&!paused) { startGame(); return; }
+  if((dx!==0&&dir.x===0)||(dy!==0&&dir.y===0)) nextDir={x:dx,y:dy};
+}
+
+function startGame() {
+  if(loop) clearInterval(loop);
+  score=0; level=1; speed=180;
+  init(false);
+  started=true;
+  canvas.classList.add('active');
+  document.getElementById('msg').textContent='Use arrows / WASD / D-pad!';
+  loop=setInterval(tick,speed);
+}
+
+function togglePause() {
+  if(!started) return;
+  if(paused) {
+    loop=setInterval(tick,speed); paused=false;
+    document.getElementById('msg').textContent='Use arrows / WASD / D-pad!';
+  } else {
+    clearInterval(loop); loop=null; paused=true;
+    document.getElementById('msg').innerHTML='<span style="color:#ffd700">⏸ Paused</span> — press Pause to continue';
+    drawPause();
+  }
+}
+
+function tick() {
+  frame++;
+  dir=nextDir;
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||snake.some(s=>s.x===head.x&&s.y===head.y)) {
+    gameOver(); return;
+  }
+  snake.unshift(head);
+  let ate=false;
+  if(head.x===apple.x&&head.y===apple.y) {
+    score+=10*level; ate=true;
+    apple=rPos(bonus?[bonus]:[]);
+    if(score>=level*50) { level++; speed=Math.max(55,speed-20); clearInterval(loop); loop=setInterval(tick,speed); }
+    if(!bonus&&Math.random()<0.28) { bonus=rPos([apple]); bonusTimer=35; }
+  } else if(bonus&&head.x===bonus.x&&head.y===bonus.y) {
+    score+=30*level; ate=true; bonus=null;
+  } else {
+    snake.pop();
+    if(bonus) { bonusTimer--; if(bonusTimer<=0) bonus=null; }
+  }
+  if(score>best) best=score;
+  updateUI();
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle=PALETTE.bg;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) {
+    ctx.fillStyle=(r+c)%2===0?PALETTE.grid1:PALETTE.grid2;
+    ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+  }
+  // Draw snake
+  snake.forEach((s,i)=>{
+    const x=s.x*CELL, y=s.y*CELL;
+    const isHead=i===0;
+    const color=isHead?PALETTE.head:PALETTE.body[i%PALETTE.body.length];
+    if(isHead) {
+      ctx.shadowColor=PALETTE.headGlow; ctx.shadowBlur=12;
+    } else { ctx.shadowBlur=0; }
+    ctx.fillStyle=color;
+    rr(x+1,y+1,CELL-2,CELL-2,isHead?7:5);
+    ctx.fill();
+    ctx.shadowBlur=0;
+    // Eye on head
+    if(isHead) {
+      const ex=dir.x===1?14:dir.x===-1?4:8;
+      const ey=dir.y===1?14:dir.y===-1?4:8;
+      ctx.fillStyle='rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.arc(x+ex,y+ey,2.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.arc(x+ex-0.5,y+ey-0.5,1,0,Math.PI*2); ctx.fill();
+    }
+    // Shine
+    ctx.fillStyle='rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.arc(x+5,y+5,2.5,0,Math.PI*2); ctx.fill();
+  });
+  // Apple
+  drawFruit(apple.x,apple.y,PALETTE.apple,PALETTE.appleGlow,false);
+  // Bonus
+  if(bonus) {
+    const pulse=Math.sin(frame*0.2)*0.3+0.7;
+    ctx.globalAlpha=pulse;
+    drawFruit(bonus.x,bonus.y,PALETTE.bonus,PALETTE.bonusGlow,true);
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawFruit(x,y,color,glow,isStar) {
+  const cx=x*CELL+CELL/2, cy=y*CELL+CELL/2, r=CELL/2-2;
+  ctx.shadowColor=glow; ctx.shadowBlur=14;
+  ctx.fillStyle=color;
+  if(!isStar) {
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.arc(cx-2,cy-2,3,0,Math.PI*2); ctx.fill();
+  } else {
+    drawStar(cx,cy,5,r,r*0.45,color);
+  }
+  ctx.shadowBlur=0;
+}
+
+function drawStar(cx,cy,pts,outer,inner,color) {
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  for(let i=0;i<pts*2;i++) {
+    const a=Math.PI/pts*i-Math.PI/2;
+    const R=i%2===0?outer:inner;
+    i===0?ctx.moveTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R):ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+function rr(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function drawPause() {
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,320,320);
+  ctx.fillStyle='#ffd700'; ctx.font='bold 20px Orbitron, monospace';
+  ctx.textAlign='center'; ctx.fillText('⏸  PAUSED',160,155);
+  ctx.fillStyle='#8888aa'; ctx.font='13px Inter, sans-serif';
+  ctx.fillText('Press Pause to continue',160,180); ctx.textAlign='left';
+}
+
+function gameOver() {
+  clearInterval(loop); loop=null; started=false;
+  canvas.classList.remove('active');
+  if(score>0) addHighScore(score);
+  ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,320,320);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ff4d6d'; ctx.font='bold 22px Orbitron, monospace';
+  ctx.fillText('GAME OVER',160,130);
+  ctx.fillStyle='#f0f0ff'; ctx.font='14px Inter, sans-serif';
+  ctx.fillText('Score: '+score,160,158);
+  ctx.fillStyle='#ffd700'; ctx.font='12px Inter, sans-serif';
+  ctx.fillText('Best: '+best,160,178);
+  ctx.fillStyle='#8888aa'; ctx.font='11px Inter, sans-serif';
+  ctx.fillText('Press Start to play again',160,210);
+  ctx.textAlign='left';
+  document.getElementById('msg').innerHTML='<span style="color:#ff4d6d">Game over!</span> Score: '+score+' — Press Start!';
+}
+
+function addHighScore(s) {
+  highScores.push(s);
+  highScores.sort((a,b)=>b-a);
+  highScores=highScores.slice(0,5);
+  renderHS();
+}
+
+function renderHS() {
+  const el=document.getElementById('hsContainer');
+  if(!highScores.length) { el.innerHTML='<div class="hs-empty">Play to record scores!</div>'; return; }
+  el.innerHTML=highScores.map((s,i)=>`
+    <div class="hs-item">
+      <span class="hs-rank">${['🥇','🥈','🥉','4th','5th'][i]}</span>
+      <span class="hs-score">${s}</span>
+    </div>`).join('');
+}
+
+document.addEventListener('keydown',e=>{
+  const map={'ArrowUp':[0,-1],'ArrowDown':[0,1],'ArrowLeft':[-1,0],'ArrowRight':[1,0],
+             'w':[0,-1],'s':[0,1],'a':[-1,0],'d':[1,0],'W':[0,-1],'S':[0,1],'A':[-1,0],'D':[1,0]};
+  if(map[e.key]) { e.preventDefault(); changeDir(...map[e.key]); }
+  if(e.key===' ') { e.preventDefault(); togglePause(); }
+  if(e.key==='r'||e.key==='R') startGame();
+});
+
+init();
+</script>
+</body>
+</html>
